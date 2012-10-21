@@ -7,6 +7,25 @@ class MoviesController < ApplicationController
   end
 
   def index
+    logger.debug("MoviesController.index - params:"+params.inspect)
+
+    @title_header_class = ""
+    @release_date_header_class = ""
+    params[:sort]?sort=params[:sort]:sort=""
+    case sort
+        when "title"
+          @title_header_class = "hilite"
+          @movies = Movie.find(:all, :order => sort)
+        when "release_date"
+          @release_date_header_class = "hilite"
+          @movies = Movie.find(:all, :order => sort)
+        else
+          @movies = Movie.all
+    end
+  end
+
+  def tailored_list
+    sort = params[:sort] # retrieve movie sort from URI route
     @movies = Movie.all
   end
 
