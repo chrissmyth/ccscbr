@@ -2,6 +2,8 @@ class MoviesController < ApplicationController
 
   def initialize
     @all_ratings = Movie.all_ratings
+    @sort = ""
+    super
   end
 
   def show
@@ -10,21 +12,43 @@ class MoviesController < ApplicationController
     # will render app/views/movies/show.<extension> by default
   end
 
+  def get_ratings_filter(params)
+     logger.debug("MoviesController.get_ratings_filter - params:"+params.inspect)
+
+    if (params.has_key? "ratings") then
+      logger.debug("MoviesController.get_ratings_filter - ratings:"+params.fetch("ratings").inspect)
+
+      return params.fetch("ratings").keys
+    end
+
+    return @all_ratings
+  end
+
   def index
-    logger.debug("MoviesController.index - params:"+params.inspect)
+    logger.debug("MoviesController.index - params:"+params.inspect + "@sort:" + @sort)
+
+
+    logger.debug("ratings exist?:"+(params.has_key? "ratings").to_s)
+    @required_ratings = get_ratings_filter(params)
+    logger.debug("required_ratings: "+ @required_ratings.to_s)
 
     @title_header_class = ""
     @release_date_header_class = ""
-    params[:sort]?sort=params[:sort]:sort=""
+    params[:sort]?sort=params[:sort]:sort=@sort
+
+    #preserve the sort
+    @sort = sort
+     logger.debug("@sort: "+ @sort + " sort:" + sort)
+
     case sort
         when "title"
           @title_header_class = "hilite"
-          @movies = Movie.find(:all, :order => sort)
+          @movies = Movie.find(:all, :conditions => ["rating IN (?)", @required_ratings] , :order => sort)
         when "release_date"
           @release_date_header_class = "hilite"
-          @movies = Movie.find(:all, :order => sort)
+          @movies = Movie.find(:all, :conditions => ["rating IN (?)", @required_ratings] , :order => sort)
         else
-          @movies = Movie.all
+          @movies = Movie.find(:all, :conditions => ["rating IN (?)", @required_ratings] )
     end
   end
 
@@ -60,5 +84,7 @@ class MoviesController < ApplicationController
     flash[:notice] = "Movie '#{@movie.title}' deleted."
     redirect_to movies_path
   end
+
+
 
 end
